@@ -1,0 +1,26 @@
+{
+  "name": "homebridge-octoprint-motion",
+  "version": "1.0.0",
+  "description": "Exposes Current OctoPrint Status as a Motion Detector",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Sunoo/homebridge-octoprint-motion.git"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "octoprint"
+  ],
+  "author": "David Maher",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/Sunoo/homebridge-octoprint-motion/issues"
+  },
+  "homepage": "https://github.com/Sunoo/homebridge-octoprint-motion#readme",
+  "engines": {
+    "node": ">=0.12.0",
+    "homebridge": ">=0.3.0"
+  },
+  "dependencies": {
+    "node-fetch": ">=2.6.0"
+  }
+}
