@@ -64,7 +64,6 @@ octoprint.prototype.fetchStatus = function(accessory) {
                 json.state = {};
                 json.state.flags = {};
                 json.state.flags.printing = false;
-                json.state.flags.ready = false;
                 json.state.flags.error = true;
                 return json;
             }
@@ -73,15 +72,15 @@ octoprint.prototype.fetchStatus = function(accessory) {
             accessory.context.flags = json.state.flags;
             accessory.getService(Service.MotionSensor)
                 .setCharacteristic(Characteristic.MotionDetected, accessory.context.flags.printing)
-                .setCharacteristic(Characteristic.StatusActive, !accessory.context.flags.error);
-            accessory.updateReachability(true);
+                .setCharacteristic(Characteristic.StatusActive, !accessory.context.flags.error)
+                .setCharacteristic(Characteristic.StatusLowBattery, false);
         })
         .catch(error => {
             accessory.context.flags = {};
             accessory.getService(Service.MotionSensor)
                 .setCharacteristic(Characteristic.MotionDetected, false)
-                .setCharacteristic(Characteristic.StatusActive, false);
-            accessory.updateReachability(false);
+                .setCharacteristic(Characteristic.StatusActive, false)
+                .setCharacteristic(Characteristic.StatusLowBattery, true);
         })
         .finally(function() {
             if (this.config.polling_seconds > 0) {
@@ -138,6 +137,8 @@ octoprint.prototype.getInitState = function(accessory) {
         .setCharacteristic(Characteristic.Manufacturer, manufacturer)
         .setCharacteristic(Characteristic.Model, model)
         .setCharacteristic(Characteristic.SerialNumber, serial);
+        
+    accessory.updateReachability(true);
 }
 
 octoprint.prototype.removeAccessories = function(accessories) {
