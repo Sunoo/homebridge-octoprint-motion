@@ -53,7 +53,7 @@ octoprint.prototype.fetchStatus = function(accessory) {
 
     fetch(accessory.context.config.url + '/api/printer', {
             headers: {
-                'X-Api-Key': this.apiKey
+                'X-Api-Key': accessory.context.config.api_key
             }
         })
         .then(res => {
