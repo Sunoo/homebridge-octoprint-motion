@@ -25,6 +25,9 @@ function octoprint(log, config, api) {
 
 octoprint.prototype.configureAccessory = function(accessory) {
     this.getInitState(accessory);
+    if (accessory.getService(Service.BatteryService) == null) {
+        accessory.addService(Service.BatteryService, accessory.context.config.name);
+    }
     this.accessories.push(accessory);
 }
 
@@ -64,35 +67,61 @@ octoprint.prototype.startSockJS = function(accessory) {
             var octo = new sockjs(accessory.context.config.url + '/sockjs/');
 
             octo.onopen = () => {
+                this.log(accessory.context.config.name + ' SockJS Connection Opened');
                 octo.send(JSON.stringify(msg));
             };
 
-            octo.onmessage = e => {
-                var state;
-                if (e.data.history) {
-                    state = e.data.history.state;
-                } else if (e.data.current) {
-                    state = e.data.current.state;
+            octo.onmessage = msg => {
+                var payload;
+                if (msg.data.connected) {
+                    accessory.getService(Service.AccessoryInformation)
+                        .setCharacteristic(Characteristic.FirmwareRevision, msg.data.connected.version);
+                    return;
+                } else if (msg.data.current) {
+                    payload = msg.data.current;
+                } else if (msg.data.history) {
+                    payload = msg.data.history;
                 } else {
                     return;
                 }
 
                 accessory.getService(Service.MotionSensor)
-                    .setCharacteristic(Characteristic.MotionDetected, state.flags.printing)
-                    .setCharacteristic(Characteristic.StatusActive, state.flags.ready || state.flags.printing)
-                    .setCharacteristic(Characteristic.StatusLowBattery, state.flags.error);
+                    .updateCharacteristic(Characteristic.MotionDetected, payload.state.flags.printing)
+                    .updateCharacteristic(Characteristic.StatusActive, payload.state.flags.ready || payload.state.flags.printing)
+                    .updateCharacteristic(Characteristic.StatusLowBattery, payload.state.flags.error);
+
+                accessory.getService(Service.BatteryService)
+                    .updateCharacteristic(Characteristic.BatteryLevel, (payload.progress.completion == null) ? 100 : payload.progress.completion)
+                    .updateCharacteristic(Characteristic.ChargingState, (payload.progress.completion != null) && !payload.state.flags.paused ? 1 : 0)
+                    .updateCharacteristic(Characteristic.StatusLowBattery, false);
             };
 
             octo.onclose = () => {
                 this.log(accessory.context.config.name + ' SockJS Connection Closed');
+                accessory.getService(Service.MotionSensor)
+                    .updateCharacteristic(Characteristic.MotionDetected, false)
+                    .updateCharacteristic(Characteristic.StatusActive, false)
+                    .updateCharacteristic(Characteristic.StatusLowBattery, true);
+
+                accessory.getService(Service.BatteryService)
+                    .updateCharacteristic(Characteristic.BatteryLevel, 0)
+                    .updateCharacteristic(Characteristic.ChargingState, 0)
+                    .updateCharacteristic(Characteristic.StatusLowBattery, true);
+
                 setTimeout(this.startSockJS.bind(this, accessory), 30 * 1000);
             };
         })
         .catch(error => {
             accessory.getService(Service.MotionSensor)
-                .setCharacteristic(Characteristic.MotionDetected, false)
-                .setCharacteristic(Characteristic.StatusActive, false)
-                .setCharacteristic(Characteristic.StatusLowBattery, true)
+                .updateCharacteristic(Characteristic.MotionDetected, false)
+                .updateCharacteristic(Characteristic.StatusActive, false)
+                .updateCharacteristic(Characteristic.StatusLowBattery, true);
+
+            accessory.getService(Service.BatteryService)
+                .updateCharacteristic(Characteristic.BatteryLevel, 0)
+                .updateCharacteristic(Characteristic.ChargingState, 0)
+                .updateCharacteristic(Characteristic.StatusLowBattery, true);
+
             setTimeout(this.startSockJS.bind(this, accessory), 30 * 1000);
         });
 }
@@ -115,6 +144,7 @@ octoprint.prototype.addAccessory = function(data) {
         accessory.context.config = data;
 
         accessory.addService(Service.MotionSensor, data.name);
+        accessory.addService(Service.BatteryService, data.name);
 
         this.api.registerPlatformAccessories("homebridge-octoprint-motion", "octoprint", [accessory]);
 
