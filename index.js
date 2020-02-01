@@ -79,7 +79,7 @@ octoprint.prototype.startSockJS = function(accessory) {
 
                 accessory.getService(Service.MotionSensor)
                     .setCharacteristic(Characteristic.MotionDetected, state.flags.printing)
-                    .setCharacteristic(Characteristic.StatusActive, state.flags.ready)
+                    .setCharacteristic(Characteristic.StatusActive, state.flags.ready || state.flags.printing)
                     .setCharacteristic(Characteristic.StatusLowBattery, state.flags.error);
             };
 
@@ -131,11 +131,6 @@ octoprint.prototype.getInitState = function(accessory) {
         this.log(accessory.displayName, "identify requested!");
         callback();
     });
-    accessory.getService(Service.MotionSensor).getCharacteristic(Characteristic.MotionDetected)
-        .on('get', callback => {
-            this.fetchStatus(accessory);
-            callback();
-        });
 
     var manufacturer = accessory.context.config.manufacturer || "Gina Häußge";
     var model = accessory.context.config.model || "OctoPrint";
