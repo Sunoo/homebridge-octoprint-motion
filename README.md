@@ -14,7 +14,6 @@ Edit your `config.json` accordingly. Configuration sample:
     "platforms": [
         {
             "platform": "octoprint",
-            "polling_seconds": 10,
             "instances": [
             {
                 "name": "Monoprice",
@@ -38,9 +37,8 @@ Edit your `config.json` accordingly. Configuration sample:
 | Fields             | Description                                                                  | Required |
 |--------------------|------------------------------------------------------------------------------|----------|
 | platform           | Must always be `octoprint`.                                                  | Yes      |
-| polling_seconds    | Number of seconds between polling for status. Polling disabled if missing.   | No       |
 | instances          | Array of Octoprint instance configs (multiple supported).                    | Yes      |
-| \|- name           | Name of your device.                                                         | No       |
+| \|- name           | Name of your device.                                                         | Yes      |
 | \|- manufacturer   | Manufacturer of your device.                                                 | No       |
 | \|- model          | Model of your device.                                                        | No       |
 | \|- serial         | Serial of your device.                                                       | No       |

@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const sockjs = require('sockjs-client');
 var Accessory, Service, Characteristic, UUIDGen;
 
 module.exports = function(homebridge) {
@@ -41,53 +42,59 @@ octoprint.prototype.didFinishLaunching = function() {
         }
     });
     this.removeAccessories(badAccessories);
-    
-    this.accessories.forEach(accessory => this.fetchStatus(accessory));
+
+    this.accessories.forEach(accessory => this.startSockJS(accessory));
 }
 
-octoprint.prototype.fetchStatus = function(accessory) {
-    if (this.timers[accessory.context.config.url]) {
-        clearTimeout(this.timers[accessory.context.config.url]);
-        this.timers[accessory.context.config.url] = null;
-    }
-
-    fetch(accessory.context.config.url + '/api/printer', {
+octoprint.prototype.startSockJS = function(accessory) {
+    var body = {};
+    body.passive = true;
+    fetch(accessory.context.config.url + '/api/login', {
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'X-Api-Key': accessory.context.config.api_key
-            }
+            },
+            body: JSON.stringify(body)
         })
-        .then(res => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                var json = {};
-                json.state = {};
-                json.state.flags = {};
-                json.state.flags.printing = false;
-                json.state.flags.error = true;
-                return json;
-            }
-        })
+        .then(res => res.json())
         .then(json => {
-            accessory.context.flags = json.state.flags;
-            accessory.getService(Service.MotionSensor)
-                .setCharacteristic(Characteristic.MotionDetected, accessory.context.flags.printing)
-                .setCharacteristic(Characteristic.StatusActive, !accessory.context.flags.error)
-                .setCharacteristic(Characteristic.StatusLowBattery, false);
+            var msg = {};
+            msg.auth = json.name + ':' + json.session;
+            var octo = new sockjs(accessory.context.config.url + '/sockjs/');
+
+            octo.onopen = () => {
+                octo.send(JSON.stringify(msg));
+            };
+
+            octo.onmessage = e => {
+                var state;
+                if (e.data.history) {
+                    state = e.data.history.state;
+                } else if (e.data.current) {
+                    state = e.data.current.state;
+                } else {
+                    return;
+                }
+
+                accessory.getService(Service.MotionSensor)
+                    .setCharacteristic(Characteristic.MotionDetected, state.flags.printing)
+                    .setCharacteristic(Characteristic.StatusActive, state.flags.ready)
+                    .setCharacteristic(Characteristic.StatusLowBattery, state.flags.error);
+            };
+
+            octo.onclose = () => {
+                this.log(accessory.context.config.name + ' SockJS Connection Closed');
+                setTimeout(this.startSockJS.bind(this, accessory), 30 * 1000);
+            };
         })
         .catch(error => {
-            accessory.context.flags = {};
             accessory.getService(Service.MotionSensor)
                 .setCharacteristic(Characteristic.MotionDetected, false)
                 .setCharacteristic(Characteristic.StatusActive, false)
-                .setCharacteristic(Characteristic.StatusLowBattery, true);
-        })
-        .finally(function() {
-            if (this.config.polling_seconds > 0) {
-                this.timers[accessory.context.config.url] = setTimeout(this.fetchStatus.bind(this, accessory),
-                    this.config.polling_seconds * 1000);
-            }
-        }.bind(this));
+                .setCharacteristic(Characteristic.StatusLowBattery, true)
+            setTimeout(this.startSockJS.bind(this, accessory), 30 * 1000);
+        });
 }
 
 octoprint.prototype.addAccessory = function(data) {
@@ -137,7 +144,7 @@ octoprint.prototype.getInitState = function(accessory) {
         .setCharacteristic(Characteristic.Manufacturer, manufacturer)
         .setCharacteristic(Characteristic.Model, model)
         .setCharacteristic(Characteristic.SerialNumber, serial);
-        
+
     accessory.updateReachability(true);
 }
 
@@ -149,6 +156,6 @@ octoprint.prototype.removeAccessories = function(accessories) {
 }
 
 octoprint.prototype.identify = function(accessory, paired, callback) {
-    this.log(accessory.context.name + "identify requested!");
+    this.log(accessory.context.config.name + "identify requested!");
     callback();
 }
