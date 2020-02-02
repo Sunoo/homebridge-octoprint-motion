@@ -20,14 +20,15 @@ Edit your `config.json` accordingly. Configuration sample:
                 "manufacturer": "Monoprice",
                 "model": "Maker Ultimate",
                 "url": "http://monoprice.local",
-                "api_key": "MGGXSMVGBF4FZBR1B40BWLKKQVMRSLVZ"
+                "api_key": "o03vc2y4tpj76iy814u1vklz0gidiqut",
+                "case_light": true
             },
             {
                 "name": "Big Boy",
                 "manufacturer": "Creality",
                 "model": "CR-10S S4",
                 "url": "http://bigboy.local",
-                "api_key": "JSA0AB6WXZ36DBFGO8R6LQYCKQZ6SI1T"
+                "api_key": "oxunsmzv6hi9nkrcxnlbtg9azgsm2uaa"
             }
             ]
         }
@@ -44,3 +45,4 @@ Edit your `config.json` accordingly. Configuration sample:
 | \|- serial         | Serial of your device.                                                       | No       |
 | \|- url            | URL of your OctoPrint instance.                                              | Yes      |
 | \|- api_key        | API Key for your OctoPrint instance.                                         | Yes      |
+| \|- case_light     | Enables control of the printer's case light.                                 | No       |

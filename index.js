@@ -8,14 +8,13 @@ module.exports = function(homebridge) {
     Characteristic = homebridge.hap.Characteristic;
     UUIDGen = homebridge.hap.uuid;
 
-    homebridge.registerPlatform("homebridge-octoprint-motion", "octoprint", octoprint, true);
+    homebridge.registerPlatform('homebridge-octoprint-motion', 'octoprint', octoprint, true);
 }
 
 function octoprint(log, config, api) {
     this.log = log;
     this.config = config;
     this.accessories = [];
-    this.timers = {};
 
     if (api) {
         this.api = api;
@@ -24,7 +23,6 @@ function octoprint(log, config, api) {
 }
 
 octoprint.prototype.configureAccessory = function(accessory) {
-    this.getInitState(accessory);
     if (accessory.getService(Service.BatteryService) == null) {
         accessory.addService(Service.BatteryService, accessory.context.config.name);
     }
@@ -50,8 +48,9 @@ octoprint.prototype.didFinishLaunching = function() {
 }
 
 octoprint.prototype.startSockJS = function(accessory) {
-    var body = {};
-    body.passive = true;
+    var body = {
+        passive: true
+    };
     fetch(accessory.context.config.url + '/api/login', {
             method: 'POST',
             headers: {
@@ -85,14 +84,42 @@ octoprint.prototype.startSockJS = function(accessory) {
                     return;
                 }
 
+                var active = payload.state.flags.ready || payload.state.flags.printing;
+
+                if (accessory.context.config.case_light) {
+                    var regex = /Send: M355 S(?<S>\d+)(?: P(?<P>\d+))?/gis;
+
+                    payload.logs.forEach(logEntry => {
+                        var result = regex.exec(logEntry);
+                        if (result) {
+                            var light = accessory.getService(Service.Lightbulb);
+                            if (result.groups.S) {
+                                light.updateCharacteristic(Characteristic.On, result.groups.S);
+                            }
+                            if (result.groups.P) {
+                                light.updateCharacteristic(Characteristic.Brightness, result.groups.P / 255 * 100);
+                            }
+                        }
+                    });
+
+                    var wasActive = accessory.getService(Service.MotionSensor).getCharacteristic(Characteristic.StatusActive).value;
+                    if (wasActive && !active) {
+                        accessory.getService(Service.Lightbulb)
+                            .updateCharacteristic(Characteristic.On, false);
+                    } else if (!wasActive && active) {
+                        accessory.getService(Service.Lightbulb)
+                            .updateCharacteristic(Characteristic.On, true);
+                    }
+                }
+
                 accessory.getService(Service.MotionSensor)
                     .updateCharacteristic(Characteristic.MotionDetected, payload.state.flags.printing)
-                    .updateCharacteristic(Characteristic.StatusActive, payload.state.flags.ready || payload.state.flags.printing)
+                    .updateCharacteristic(Characteristic.StatusActive, active)
                     .updateCharacteristic(Characteristic.StatusLowBattery, payload.state.flags.error);
 
                 accessory.getService(Service.BatteryService)
                     .updateCharacteristic(Characteristic.BatteryLevel, (payload.progress.completion == null) ? 100 : payload.progress.completion)
-                    .updateCharacteristic(Characteristic.ChargingState, (payload.progress.completion != null) && !payload.state.flags.paused ? 1 : 0)
+                    .updateCharacteristic(Characteristic.ChargingState, ((payload.progress.completion != null) && !payload.state.flags.paused) ? 1 : 0)
                     .updateCharacteristic(Characteristic.StatusLowBattery, false);
             };
 
@@ -108,6 +135,11 @@ octoprint.prototype.startSockJS = function(accessory) {
                     .updateCharacteristic(Characteristic.ChargingState, 0)
                     .updateCharacteristic(Characteristic.StatusLowBattery, true);
 
+                if (accessory.context.config.case_light) {
+                    accessory.getService(Service.Lightbulb)
+                        .updateCharacteristic(Characteristic.On, false);
+                }
+
                 setTimeout(this.startSockJS.bind(this, accessory), 30 * 1000);
             };
         })
@@ -122,12 +154,56 @@ octoprint.prototype.startSockJS = function(accessory) {
                 .updateCharacteristic(Characteristic.ChargingState, 0)
                 .updateCharacteristic(Characteristic.StatusLowBattery, true);
 
+            if (accessory.context.config.case_light) {
+                accessory.getService(Service.Lightbulb)
+                    .updateCharacteristic(Characteristic.On, false);
+            }
+
             setTimeout(this.startSockJS.bind(this, accessory), 30 * 1000);
         });
 }
 
+octoprint.prototype.setCaseLight = function(accessory, state, callback) {
+    var body = {
+        command: 'M355 S'
+    };
+    if (state > 0) {
+        body.command += '1 P' + Math.round(state * 2.55);
+    } else {
+        body.command += '0';
+    }
+    fetch(accessory.context.config.url + '/api/printer/command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': accessory.context.config.api_key
+            },
+            body: JSON.stringify(body)
+        })
+        .then(res => {
+            if (res.ok) {
+                callback();
+            } else {
+                callback(res.statusText)
+            }
+        })
+        .catch(error => callback(error));
+}
+
+octoprint.prototype.setCaseLightToggle = function(accessory, state, callback) {
+    var on = accessory.getService(Service.Lightbulb).getCharacteristic(Characteristic.On).value;
+    if (state && !on) {
+        var light = accessory.getService(Service.Lightbulb).getCharacteristic(Characteristic.Brightness).value;
+        this.setCaseLight(accessory, light, callback);
+    } else if (!state && on) {
+        this.setCaseLight(accessory, 0, callback);
+    } else {
+        callback();
+    }
+}
+
 octoprint.prototype.addAccessory = function(data) {
-    this.log("Initializing platform accessory '" + data.name + "'...");
+    this.log('Initializing platform accessory ' + data.name + '...');
 
     var accessory;
     this.accessories.forEach(cachedAccessory => {
@@ -146,41 +222,62 @@ octoprint.prototype.addAccessory = function(data) {
         accessory.addService(Service.MotionSensor, data.name);
         accessory.addService(Service.BatteryService, data.name);
 
-        this.api.registerPlatformAccessories("homebridge-octoprint-motion", "octoprint", [accessory]);
+        this.api.registerPlatformAccessories('homebridge-octoprint-motion', 'octoprint', [accessory]);
 
         this.accessories.push(accessory);
 
         this.getInitState(accessory);
     } else {
         accessory.context.config = data;
+
+        this.getInitState(accessory);
     }
 }
 
 octoprint.prototype.getInitState = function(accessory) {
     accessory.on('identify', (paired, callback) => {
-        this.log(accessory.displayName, "identify requested!");
+        this.log(accessory.context.config.name + ' identify requested!');
         callback();
     });
 
-    var manufacturer = accessory.context.config.manufacturer || "Gina Häußge";
-    var model = accessory.context.config.model || "OctoPrint";
+    var manufacturer = accessory.context.config.manufacturer || 'Gina Häußge';
+    var model = accessory.context.config.model || 'OctoPrint';
     var serial = accessory.context.config.serial || accessory.context.config.url;
     accessory.getService(Service.AccessoryInformation)
         .setCharacteristic(Characteristic.Manufacturer, manufacturer)
         .setCharacteristic(Characteristic.Model, model)
         .setCharacteristic(Characteristic.SerialNumber, serial);
 
+    accessory.context.config.case_light = accessory.context.config.case_light || false;
+
+    var light = accessory.getService(Service.Lightbulb);
+    if (light != undefined && !accessory.context.config.case_light) {
+        accessory.removeService(light);
+    } else if (light == undefined && accessory.context.config.case_light) {
+        accessory.addService(Service.Lightbulb, accessory.context.config.name)
+            .addCharacteristic(Characteristic.Brightness);
+    }
+
+    if (light) {
+        light.getCharacteristic(Characteristic.Brightness)
+            .on('set', this.setCaseLight.bind(this, accessory))
+            .updateValue(100);
+        light.getCharacteristic(Characteristic.On)
+            .on('set', this.setCaseLightToggle.bind(this, accessory))
+            .updateValue(true);
+    }
+
     accessory.updateReachability(true);
 }
 
 octoprint.prototype.removeAccessories = function(accessories) {
     accessories.forEach(accessory => {
-        this.api.unregisterPlatformAccessories("homebridge-octoprint-motion", "octoprint", [accessory]);
+        this.api.unregisterPlatformAccessories('homebridge-octoprint-motion', 'octoprint', [accessory]);
         this.accessories.splice(this.accessories.indexOf(accessory), 1);
     });
 }
 
 octoprint.prototype.identify = function(accessory, paired, callback) {
-    this.log(accessory.context.config.name + "identify requested!");
+    this.log(accessory.context.config.name + 'identify requested!');
     callback();
 }
