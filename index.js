@@ -115,7 +115,7 @@ octoprint.prototype.startSockJS = function(accessory) {
                 accessory.getService(Service.MotionSensor)
                     .updateCharacteristic(Characteristic.MotionDetected, payload.state.flags.printing)
                     .updateCharacteristic(Characteristic.StatusActive, active)
-                    .updateCharacteristic(Characteristic.StatusLowBattery, payload.state.flags.error);
+                    .updateCharacteristic(Characteristic.StatusLowBattery, payload.state.flags.error || payload.state.flags.closedOrError);
 
                 accessory.getService(Service.BatteryService)
                     .updateCharacteristic(Characteristic.BatteryLevel, (payload.progress.completion == null) ? 100 : payload.progress.completion)
@@ -163,31 +163,42 @@ octoprint.prototype.startSockJS = function(accessory) {
         });
 }
 
+octoprint.prototype.resetCaseLight = function(accessory, state) {
+    setTimeout(() => {
+        accessory.getService(Service.Lightbulb)
+            .updateCharacteristic(Characteristic.On, !state);
+    }, 100);
+}
+
 octoprint.prototype.setCaseLight = function(accessory, state, callback) {
-    var body = {
-        command: 'M355 S'
-    };
-    if (state > 0) {
-        body.command += '1 P' + Math.round(state * 2.55);
-    } else {
-        body.command += '0';
-    }
-    fetch(accessory.context.config.url + '/api/printer/command', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Api-Key': accessory.context.config.api_key
-            },
-            body: JSON.stringify(body)
-        })
-        .then(res => {
-            if (res.ok) {
+    if (accessory.getService(Service.MotionSensor).getCharacteristic(Characteristic.StatusActive).value) {
+        var body = {
+            command: 'M355 S'
+        };
+        if (state > 0) {
+            body.command += '1 P' + Math.round(state * 2.55);
+        } else {
+            body.command += '0';
+        }
+        fetch(accessory.context.config.url + '/api/printer/command', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Api-Key': accessory.context.config.api_key
+                },
+                body: JSON.stringify(body)
+            })
+            .then(res => {
                 callback();
-            } else {
-                callback(res.status)
-            }
-        })
-        .catch(error => callback(error));
+                if (!res.ok) {
+                    this.resetCaseLight(accessory, state);
+                }
+            })
+            .catch(error => callback(error));
+    } else {
+        callback();
+        this.resetCaseLight(accessory, state);
+    }
 }
 
 octoprint.prototype.setCaseLightToggle = function(accessory, state, callback) {
@@ -258,7 +269,7 @@ octoprint.prototype.getInitState = function(accessory) {
     if (light != undefined && !accessory.context.config.case_light) {
         accessory.removeService(light);
     } else if (light == undefined && accessory.context.config.case_light) {
-        light = accessory.addService(Service.Lightbulb, accessory.context.config.name);
+        light = accessory.addService(Service.Lightbulb, accessory.context.config.name + " Case Light");
         light.addCharacteristic(Characteristic.Brightness);
     }
 
