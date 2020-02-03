@@ -184,7 +184,7 @@ octoprint.prototype.setCaseLight = function(accessory, state, callback) {
             if (res.ok) {
                 callback();
             } else {
-                callback(res.statusText)
+                callback(res.status)
             }
         })
         .catch(error => callback(error));
@@ -248,14 +248,18 @@ octoprint.prototype.getInitState = function(accessory) {
         .setCharacteristic(Characteristic.Model, model)
         .setCharacteristic(Characteristic.SerialNumber, serial);
 
+    accessory.getService(Service.MotionSensor)
+        .setCharacteristic(Characteristic.StatusActive, true);
+
     accessory.context.config.case_light = accessory.context.config.case_light || false;
 
     var light = accessory.getService(Service.Lightbulb);
+
     if (light != undefined && !accessory.context.config.case_light) {
         accessory.removeService(light);
     } else if (light == undefined && accessory.context.config.case_light) {
-        accessory.addService(Service.Lightbulb, accessory.context.config.name)
-            .addCharacteristic(Characteristic.Brightness);
+        light = accessory.addService(Service.Lightbulb, accessory.context.config.name);
+        light.addCharacteristic(Characteristic.Brightness);
     }
 
     if (light) {
