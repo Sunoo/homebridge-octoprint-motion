@@ -1,0 +1,75 @@
+{
+    "pluginAlias": "octoprint",
+    "pluginType": "platform",
+    "singular": true,
+    "headerDisplay": "[OctoPrint](https://octoprint.org) Plugin for [Homebridge](https://github.com/nfarina/homebridge).",
+    "footerDisplay": "Raise [Issues](https://github.com/Sunoo/homebridge-octoprint-motion/issues) or submit [Pull Requests](https://github.com/Sunoo/homebridge-octoprint-motion/pulls) on [Project Page](https://github.com/Sunoo/homebridge-octoprint-motion).",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "title": "Name",
+                "type": "string",
+                "required": true,
+                "default": "Octoprint Motion",
+                "description": "A unique name for the accessory. It will be used as the accessory name in HomeKit."
+            },
+            "instances": {
+                "title": "Instances",
+                "type": "array",
+                "required": true,
+                "minLength": 1,
+                "items": {
+                    "title": "Octoprint Instance",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "title": "Name",
+                            "type": "string",
+                            "required": true,
+                            "placeholder": "Monoprice",
+                            "description": "Name of your device."
+                        },
+                        "manufacturer": {
+                            "title": "Manufacturer",
+                            "type": "string",
+                            "description": "Manufacturer of your device."
+                        },
+                        "model": {
+                            "title": "Model",
+                            "type": "string",
+                            "description": "Model of your device."
+                        },
+                        "serial": {
+                            "title": "Serial",
+                            "type": "string",
+                            "description": "Serial of your device."
+                        },
+                        "url": {
+                            "title": "URL",
+                            "type": "string",
+                            "required": true,
+                            "format": "uri",
+                            "placeholder": "http://monoprice.local",
+                            "description": "URL of your OctoPrint instance."
+                        },
+                        "api_key": {
+                            "title": "API Key",
+                            "type": "string",
+                            "required": true,
+                            "minLength": 32,
+                            "maxLength": 32,
+                            "placeholder": "o03vc2y4tpj76iy814u1vklz0gidiqut",
+                            "description": "API Key for your OctoPrint instance."
+                        },
+                        "case_light": {
+                            "title": "Case Light",
+                            "type": "boolean",
+                            "description": "Enables control of the printer's case light."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
