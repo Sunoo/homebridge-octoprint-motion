@@ -66,6 +66,11 @@
                             "title": "Case Light",
                             "type": "boolean",
                             "description": "Enables control of the printer's case light."
+                        },
+                        "occupancy_sensor": {
+                            "title": "Occupancy Sensor",
+                            "type": "boolean",
+                            "description": "Exposes an occupancy sensor instead of a motion sensor."
                         }
                     }
                 }

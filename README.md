@@ -1,7 +1,7 @@
 # homebridge-octoprint-motion
 [OctoPrint](https://octoprint.org) Plugin for [Homebridge](https://github.com/nfarina/homebridge)
 
-This plugin exposes the current status of a 3D printer connected to OctoPrint as a Motion Sensor.
+This plugin exposes the current status of a 3D printer connected to OctoPrint as a Motion Sensor or Occupancy Sensor.
 
 ### Installation
 1. Install homebridge using `npm install -g homebridge`.
@@ -35,14 +35,15 @@ Edit your `config.json` accordingly. Configuration sample:
     ]
 ```
 
-| Fields             | Description                                                                  | Required |
-|--------------------|------------------------------------------------------------------------------|----------|
-| platform           | Must always be `octoprint`.                                                  | Yes      |
-| instances          | Array of Octoprint instance configs (multiple supported).                    | Yes      |
-| \|- name           | Name of your device.                                                         | Yes      |
-| \|- manufacturer   | Manufacturer of your device.                                                 | No       |
-| \|- model          | Model of your device.                                                        | No       |
-| \|- serial         | Serial of your device.                                                       | No       |
-| \|- url            | URL of your OctoPrint instance.                                              | Yes      |
-| \|- api_key        | API Key for your OctoPrint instance.                                         | Yes      |
-| \|- case_light     | Enables control of the printer's case light.                                 | No       |
+| Fields               | Description                                                                  | Required |
+|----------------------|------------------------------------------------------------------------------|----------|
+| platform             | Must always be `octoprint`.                                                  | Yes      |
+| instances            | Array of Octoprint instance configs (multiple supported).                    | Yes      |
+| \|- name             | Name of your device.                                                         | Yes      |
+| \|- manufacturer     | Manufacturer of your device.                                                 | No       |
+| \|- model            | Model of your device.                                                        | No       |
+| \|- serial           | Serial of your device.                                                       | No       |
+| \|- url              | URL of your OctoPrint instance.                                              | Yes      |
+| \|- api_key          | API Key for your OctoPrint instance.                                         | Yes      |
+| \|- case_light       | Enables control of the printer's case light.                                 | No       |
+| \|- occupancy_sensor | Exposes an occupancy sensor instead of a motion sensor.                      | No       |

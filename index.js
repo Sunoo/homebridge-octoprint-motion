@@ -48,6 +48,14 @@ octoprint.prototype.didFinishLaunching = function() {
 }
 
 octoprint.prototype.startSockJS = function(accessory) {
+    if (accessory.context.config.occupancy_sensor) {
+        var sensor = accessory.getService(Service.OccupancySensor);
+        var detected = Characteristic.OccupancyDetected;
+    } else {
+        var sensor = accessory.getService(Service.MotionSensor);
+        var detected = Characteristic.MotionDetected;
+    }
+
     var body = {
         passive: true
     };
@@ -102,7 +110,7 @@ octoprint.prototype.startSockJS = function(accessory) {
                         }
                     });
 
-                    var wasActive = accessory.getService(Service.MotionSensor).getCharacteristic(Characteristic.StatusActive).value;
+                    var wasActive = sensor.getCharacteristic(Characteristic.StatusActive).value;
                     if (wasActive && !active) {
                         accessory.getService(Service.Lightbulb)
                             .updateCharacteristic(Characteristic.On, false);
@@ -112,8 +120,8 @@ octoprint.prototype.startSockJS = function(accessory) {
                     }
                 }
 
-                accessory.getService(Service.MotionSensor)
-                    .updateCharacteristic(Characteristic.MotionDetected, payload.state.flags.printing)
+                sensor
+                    .updateCharacteristic(detected, payload.state.flags.printing)
                     .updateCharacteristic(Characteristic.StatusActive, active)
                     .updateCharacteristic(Characteristic.StatusLowBattery, payload.state.flags.error || payload.state.flags.closedOrError);
 
@@ -125,8 +133,8 @@ octoprint.prototype.startSockJS = function(accessory) {
 
             octo.onclose = () => {
                 this.log(accessory.context.config.name + ' SockJS Connection Closed');
-                accessory.getService(Service.MotionSensor)
-                    .updateCharacteristic(Characteristic.MotionDetected, false)
+                sensor
+                    .updateCharacteristic(detected, false)
                     .updateCharacteristic(Characteristic.StatusActive, false)
                     .updateCharacteristic(Characteristic.StatusLowBattery, true);
 
@@ -144,8 +152,8 @@ octoprint.prototype.startSockJS = function(accessory) {
             };
         })
         .catch(error => {
-            accessory.getService(Service.MotionSensor)
-                .updateCharacteristic(Characteristic.MotionDetected, false)
+            sensor
+                .updateCharacteristic(detected, false)
                 .updateCharacteristic(Characteristic.StatusActive, false)
                 .updateCharacteristic(Characteristic.StatusLowBattery, true);
 
@@ -171,7 +179,13 @@ octoprint.prototype.resetCaseLight = function(accessory, state) {
 }
 
 octoprint.prototype.setCaseLight = function(accessory, state, callback) {
-    if (accessory.getService(Service.MotionSensor).getCharacteristic(Characteristic.StatusActive).value) {
+    if (accessory.context.config.occupancy_sensor) {
+        var sensor = accessory.getService(Service.OccupancySensor);
+    } else {
+        var sensor = accessory.getService(Service.MotionSensor);
+    }
+
+    if (sensor.getCharacteristic(Characteristic.StatusActive).value) {
         var body = {
             command: 'M355 S'
         };
@@ -230,7 +244,11 @@ octoprint.prototype.addAccessory = function(data) {
 
         accessory.context.config = data;
 
-        accessory.addService(Service.MotionSensor, data.name);
+        if (data.occupancy_sensor) {
+            accessory.addService(Service.OccupancySensor, data.name);
+        } else {
+            accessory.addService(Service.MotionSensor, data.name);
+        }
         accessory.addService(Service.BatteryService, data.name);
 
         this.api.registerPlatformAccessories('homebridge-octoprint-motion', 'octoprint', [accessory]);
@@ -240,6 +258,25 @@ octoprint.prototype.addAccessory = function(data) {
         this.getInitState(accessory);
     } else {
         accessory.context.config = data;
+
+        var motion = accessory.getService(Service.MotionSensor);
+        var occupy = accessory.getService(Service.OccupancySensor);
+
+        if (data.occupancy_sensor) {
+            if (motion != undefined) {
+                accessory.removeService(motion);
+            }
+            if (occupy == undefined) {
+                accessory.addService(Service.OccupancySensor, data.name);
+            }
+        } else {
+            if (occupy != undefined) {
+                accessory.removeService(occupy);
+            }
+            if (motion == undefined) {
+                accessory.addService(Service.MotionSensor, data.name);
+            }
+        }
 
         this.getInitState(accessory);
     }
@@ -259,8 +296,12 @@ octoprint.prototype.getInitState = function(accessory) {
         .setCharacteristic(Characteristic.Model, model)
         .setCharacteristic(Characteristic.SerialNumber, serial);
 
-    accessory.getService(Service.MotionSensor)
-        .setCharacteristic(Characteristic.StatusActive, true);
+    if (accessory.context.config.occupancy_sensor) {
+        var sensor = accessory.getService(Service.OccupancySensor);
+    } else {
+        var sensor = accessory.getService(Service.MotionSensor);
+    }
+    sensor.setCharacteristic(Characteristic.StatusActive, true);
 
     accessory.context.config.case_light = accessory.context.config.case_light || false;
 
