@@ -1,4 +1,6 @@
 # homebridge-octoprint-motion
+[![npm](https://img.shields.io/npm/v/homebridge-octoprint-motion) ![npm](https://img.shields.io/npm/dt/homebridge-octoprint-motion)](https://www.npmjs.com/package/homebridge-octoprint-motion)
+
 [OctoPrint](https://octoprint.org) Plugin for [Homebridge](https://github.com/nfarina/homebridge)
 
 This plugin exposes the current status of a 3D printer connected to OctoPrint as a Motion Sensor or Occupancy Sensor.
