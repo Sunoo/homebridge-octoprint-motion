@@ -6,8 +6,8 @@
 This plugin exposes the current status of a 3D printer connected to OctoPrint as a Motion Sensor or Occupancy Sensor.
 
 ### Installation
-1. Install homebridge using `npm install -g homebridge`.
-2. Install this plugin using `npm install -g homebridge-octoprint-motion`.
+1. Install Homebridge using the [official instructions](https://github.com/homebridge/homebridge/wiki).
+2. Install this plugin using `sudo npm install -g homebridge-octoprint-motion`.
 3. Update your configuration file. See configuration sample below.
 
 ### Configuration
