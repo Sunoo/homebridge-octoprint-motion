@@ -12,7 +12,7 @@
     "octoprint"
   ],
   "author": "David Maher",
-  "license": "BSD",
+  "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/Sunoo/homebridge-octoprint-motion/issues"
   },
