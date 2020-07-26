@@ -1,40 +1,44 @@
 # homebridge-octoprint-motion
+
 [![npm](https://img.shields.io/npm/v/homebridge-octoprint-motion) ![npm](https://img.shields.io/npm/dt/homebridge-octoprint-motion)](https://www.npmjs.com/package/homebridge-octoprint-motion)
 
 [OctoPrint](https://octoprint.org) Plugin for [Homebridge](https://github.com/nfarina/homebridge)
 
 This plugin exposes the current status of a 3D printer connected to OctoPrint as a Motion Sensor or Occupancy Sensor.
 
-### Installation
+## Installation
+
 1. Install Homebridge using the [official instructions](https://github.com/homebridge/homebridge/wiki).
 2. Install this plugin using `sudo npm install -g homebridge-octoprint-motion`.
 3. Update your configuration file. See configuration sample below.
 
 ### Configuration
+
 Edit your `config.json` accordingly. Configuration sample:
- ```
-    "platforms": [
+
+ ```json
+"platforms": [
+    {
+        "platform": "octoprint",
+        "instances": [
         {
-            "platform": "octoprint",
-            "instances": [
-            {
-                "name": "Monoprice",
-                "manufacturer": "Monoprice",
-                "model": "Maker Ultimate",
-                "url": "http://monoprice.local",
-                "api_key": "o03vc2y4tpj76iy814u1vklz0gidiqut",
-                "case_light": true
-            },
-            {
-                "name": "Big Boy",
-                "manufacturer": "Creality",
-                "model": "CR-10S S4",
-                "url": "http://bigboy.local",
-                "api_key": "oxunsmzv6hi9nkrcxnlbtg9azgsm2uaa"
-            }
-            ]
+            "name": "Monoprice",
+            "manufacturer": "Monoprice",
+            "model": "Maker Ultimate",
+            "url": "http://monoprice.local",
+            "api_key": "o03vc2y4tpj76iy814u1vklz0gidiqut",
+            "case_light": true
+        },
+        {
+            "name": "Big Boy",
+            "manufacturer": "Creality",
+            "model": "CR-10S S4",
+            "url": "http://bigboy.local",
+            "api_key": "oxunsmzv6hi9nkrcxnlbtg9azgsm2uaa"
         }
-    ]
+        ]
+    }
+]
 ```
 
 | Fields               | Description                                                                  | Required |
