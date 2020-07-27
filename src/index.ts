@@ -13,6 +13,7 @@ import {
 } from 'homebridge';
 import fetch from 'node-fetch';
 import sockjs from 'sockjs-client';
+import { OctoprintPlatformConfig, InstanceConfig } from './configTypes';
 
 let hap: HAP;
 let Accessory: typeof PlatformAccessory;
@@ -23,12 +24,12 @@ const PLATFORM_NAME = 'octoprint';
 class OctoprintPlatform implements DynamicPlatformPlugin {
   private readonly log: Logging;
   private readonly api: API;
-  private readonly config: PlatformConfig;
+  private readonly config: OctoprintPlatformConfig;
   private readonly accessories: Array<PlatformAccessory>;
 
   constructor(log: Logging, config: PlatformConfig, api: API) {
     this.log = log;
-    this.config = config;
+    this.config = config as unknown as OctoprintPlatformConfig;
     this.api = api;
     this.accessories = [];
 
@@ -43,17 +44,14 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
   }
 
   didFinishLaunching(): void {
-    const urls: Array<any> = [];
-    this.config.instances.forEach((instance: any) => {
+    const urls: Array<string> = [];
+    this.config.instances.forEach((instance: InstanceConfig) => {
       this.addAccessory(instance);
       urls.push(instance.url);
     });
 
-    const badAccessories: Array<PlatformAccessory> = [];
-    this.accessories.forEach(cachedAccessory => {
-      if (!urls.includes(cachedAccessory.context.config.url)) {
-        badAccessories.push(cachedAccessory);
-      }
+    const badAccessories = this.accessories.filter((cachedAccessory: PlatformAccessory) => {
+      return !urls.includes(cachedAccessory.context.config.url);
     });
     this.removeAccessories(badAccessories);
 
@@ -62,7 +60,7 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
 
   startSockJS(accessory: PlatformAccessory): void {
     let sensor: Service | undefined;
-    let detected: any;
+    let detected: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     if (accessory.context.config.occupancy_sensor) {
       sensor = accessory.getService(hap.Service.OccupancySensor);
       detected = hap.Characteristic.OccupancyDetected;
@@ -115,7 +113,7 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
           if (accessory.context.config.case_light) {
             const regex = /Send: M355 S(?<S>\d+)(?: P(?<P>\d+))?/gis;
 
-            payload.logs.forEach((logEntry: any): void => {
+            payload.logs.forEach((logEntry: any): void => { // eslint-disable-line @typescript-eslint/no-explicit-any
               const result = regex.exec(logEntry);
               if (result?.groups) {
                 const light = accessory.getService(hap.Service.Lightbulb);
@@ -281,26 +279,26 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  addAccessory(data: any): void {
-    this.log('Initializing platform accessory ' + data.name + '...');
+  addAccessory(instance: InstanceConfig): void {
+    this.log('Initializing platform accessory ' + instance.name + '...');
 
     let accessory = this.accessories.find(cachedAccessory => {
-      return cachedAccessory.context.config.url == data.url;
+      return cachedAccessory.context.config.url == instance.url;
     });
 
     if (!accessory) {
-      const uuid = hap.uuid.generate(data.url);
+      const uuid = hap.uuid.generate(instance.url);
 
-      accessory = new Accessory(data.name, uuid);
+      accessory = new Accessory(instance.name, uuid);
 
-      accessory.context.config = data;
+      accessory.context.config = instance;
 
-      if (data.occupancy_sensor) {
-        accessory.addService(hap.Service.OccupancySensor, data.name);
+      if (instance.occupancy_sensor) {
+        accessory.addService(hap.Service.OccupancySensor, instance.name);
       } else {
-        accessory.addService(hap.Service.MotionSensor, data.name);
+        accessory.addService(hap.Service.MotionSensor, instance.name);
       }
-      accessory.addService(hap.Service.BatteryService, data.name);
+      accessory.addService(hap.Service.BatteryService, instance.name);
 
       this.api.registerPlatformAccessories('homebridge-octoprint-motion', 'octoprint', [accessory]);
 
@@ -308,24 +306,24 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
 
       this.getInitState(accessory);
     } else {
-      accessory.context.config = data;
+      accessory.context.config = instance;
 
       const motion = accessory.getService(hap.Service.MotionSensor);
       const occupy = accessory.getService(hap.Service.OccupancySensor);
 
-      if (data.occupancy_sensor) {
+      if (instance.occupancy_sensor) {
         if (motion != undefined) {
           accessory.removeService(motion);
         }
         if (occupy == undefined) {
-          accessory.addService(hap.Service.OccupancySensor, data.name);
+          accessory.addService(hap.Service.OccupancySensor, instance.name);
         }
       } else {
         if (occupy != undefined) {
           accessory.removeService(occupy);
         }
         if (motion == undefined) {
-          accessory.addService(hap.Service.MotionSensor, data.name);
+          accessory.addService(hap.Service.MotionSensor, instance.name);
         }
       }
 

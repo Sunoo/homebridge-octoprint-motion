@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Octoprint Motion",
   "name": "homebridge-octoprint-motion",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "description": "Exposes Current OctoPrint Status as a Motion Detector",
   "main": "dist/index.js",
   "repository": {
@@ -21,8 +21,8 @@
     "clean": "rimraf ./dist ./coverage",
     "build": "rimraf ./dist ./coverage && tsc",
     "format": "markdownlint --fix *.md",
-    "lint": "eslint **/*.ts --fix",
-    "lint-check": "eslint **/*.ts",
+    "lint": "eslint src/*.ts --fix",
+    "lint-check": "eslint src/*.ts",
     "prepare": "npm run build",
     "prepublishOnly": "npm run lint-check",
     "postpublish": "npm run clean",
@@ -40,6 +40,13 @@
     "rimraf": "^3.0.2",
     "typescript": "^3.9.7"
   },
+  "files": [
+    "config.schema.json",
+    "dist/**/*",
+    "LICENSE",
+    "package.json",
+    "README.md"
+  ],
   "engines": {
     "node": ">=0.12.0",
     "homebridge": ">=0.3.0"
