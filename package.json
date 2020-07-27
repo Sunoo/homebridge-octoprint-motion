@@ -17,7 +17,8 @@
   "bugs": {
     "url": "https://github.com/Sunoo/homebridge-octoprint-motion/issues"
   },
-  "homepage": "https://github.com/Sunoo/homebridge-octoprint-motion#readme",  "scripts": {
+  "homepage": "https://github.com/Sunoo/homebridge-octoprint-motion#readme",
+  "scripts": {
     "clean": "rimraf ./dist ./coverage",
     "build": "rimraf ./dist ./coverage && tsc",
     "format": "markdownlint --fix *.md",
