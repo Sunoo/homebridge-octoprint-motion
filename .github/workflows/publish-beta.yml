@@ -21,7 +21,7 @@ jobs:
           CI: true
 
   publish-npm:
-    if: github.repository == 'Sunoo/homebridge-aqicn'
+    if: github.repository == 'Sunoo/homebridge-octoprint-motion'
 
     needs: build
 
