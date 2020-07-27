@@ -116,7 +116,6 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
             payload.logs.forEach((logEntry: any): void => { // eslint-disable-line @typescript-eslint/no-explicit-any
               const result = regex.exec(logEntry);
               if (result?.groups) {
-                this.log.warn(JSON.stringify(result));
                 const light = accessory.getService(hap.Service.Lightbulb);
                 if (light) {
                   if (result.groups.S) {
