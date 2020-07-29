@@ -111,12 +111,12 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
           const active = payload.state.flags.ready || payload.state.flags.printing;
 
           if (accessory.context.config.case_light) {
+            const light = accessory.getService(hap.Service.Lightbulb);
             const regex = /Send: M355 S(?<S>\d+)(?: P(?<P>\d+))?/gis;
 
             payload.logs.forEach((logEntry: any): void => { // eslint-disable-line @typescript-eslint/no-explicit-any
               const result = regex.exec(logEntry);
               if (result?.groups) {
-                const light = accessory.getService(hap.Service.Lightbulb);
                 if (light) {
                   if (result.groups.S) {
                     light.updateCharacteristic(hap.Characteristic.On, result.groups.S);
@@ -127,6 +127,15 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
                 }
               }
             });
+
+            if (sensor && light) {
+              const wasActive = sensor.getCharacteristic(hap.Characteristic.StatusActive).value;
+              if (wasActive && !active) {
+                light.updateCharacteristic(hap.Characteristic.On, false);
+              } else if (!wasActive && active) {
+                light.updateCharacteristic(hap.Characteristic.On, true);
+              }
+            }
           }
 
           if (sensor) {
@@ -348,14 +357,12 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
     accessory.context.config.case_light = accessory.context.config.case_light || false;
 
     let light = accessory.getService(hap.Service.Lightbulb);
-
     if (light != undefined && !accessory.context.config.case_light) {
       accessory.removeService(light);
     } else if (light == undefined && accessory.context.config.case_light) {
       light = accessory.addService(hap.Service.Lightbulb, accessory.context.config.name + ' Case Light');
       light.addCharacteristic(hap.Characteristic.Brightness);
     }
-
     if (light) {
       light.getCharacteristic(hap.Characteristic.Brightness)
         .on('set', this.setCaseLight.bind(this, accessory))
