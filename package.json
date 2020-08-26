@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Octoprint Motion",
   "name": "homebridge-octoprint-motion",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Exposes Current OctoPrint Status as a Motion Detector",
   "main": "dist/index.js",
   "repository": {
@@ -14,6 +14,24 @@
   ],
   "author": "David Maher",
   "license": "BSD-2-Clause",
+  "funding": [
+    {
+      "type": "kofi",
+      "url": "https://ko-fi.com/sunookitsune"
+    },
+    {
+      "type": "paypal",
+      "url": "https://paypal.me/sunoo"
+    },
+    {
+      "type": "github",
+      "url": "https://github.com/Sunoo"
+    },
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/Sunoo"
+    }
+  ],
   "bugs": {
     "url": "https://github.com/Sunoo/homebridge-octoprint-motion/issues"
   },

@@ -1,6 +1,6 @@
 # homebridge-octoprint-motion
 
-[![npm](https://img.shields.io/npm/v/homebridge-octoprint-motion) ![npm](https://img.shields.io/npm/dt/homebridge-octoprint-motion)](https://www.npmjs.com/package/homebridge-octoprint-motion)
+[![npm](https://img.shields.io/npm/v/homebridge-octoprint-motion) ![npm](https://img.shields.io/npm/dt/homebridge-octoprint-motion)](https://www.npmjs.com/package/homebridge-octoprint-motion) [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 
 [OctoPrint](https://octoprint.org) Plugin for [Homebridge](https://github.com/nfarina/homebridge)
 
