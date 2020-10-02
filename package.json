@@ -55,7 +55,7 @@
     "@types/sockjs-client": "1.1.1",
     "eslint": "^7.5.0",
     "homebridge": "^1.1.1",
-    "markdownlint-cli": "^0.23.2",
+    "markdownlint-cli": "^0.24.0",
     "rimraf": "^3.0.2",
     "typescript": "^4.0.2"
   },
