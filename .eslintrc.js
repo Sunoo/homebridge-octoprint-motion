@@ -21,6 +21,7 @@ module.exports = {
     '@typescript-eslint/no-base-to-string': 'error',
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-extra-parens': 'error',
+    '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-unnecessary-boolean-literal-compare': ['error', {"allowComparingNullableBooleansToTrue": false, "allowComparingNullableBooleansToFalse": false}],
     '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/prefer-optional-chain': 'error',

@@ -45,10 +45,18 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
 
   didFinishLaunching(): void {
     const urls: Array<string> = [];
-    this.config.instances.forEach((instance: InstanceConfig) => {
-      this.addAccessory(instance);
-      urls.push(instance.url);
-    });
+    if (this.config.instances) {
+      this.config.instances.forEach((instance: InstanceConfig) => {
+        if (!instance.name) {
+          this.log.error('One of your instances has no name configured. This instance will be skipped.');
+        } else if (!instance.url) {
+          this.log.error('One of your instances has no URL configured. This instance will be skipped.');
+        } else {
+          this.addAccessory(instance);
+          urls.push(instance.url);
+        }
+      });
+    }
 
     const badAccessories = this.accessories.filter((cachedAccessory: PlatformAccessory) => {
       return !urls.includes(cachedAccessory.context.config.url);
@@ -284,9 +292,9 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
     });
 
     if (!accessory) {
-      const uuid = hap.uuid.generate(instance.url);
+      const uuid = hap.uuid.generate(instance.url!);
 
-      accessory = new Accessory(instance.name, uuid);
+      accessory = new Accessory(instance.name!, uuid);
 
       accessory.context.config = instance;
 
