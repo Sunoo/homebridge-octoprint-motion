@@ -80,7 +80,7 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
     const body = {
       passive: true
     };
-    fetch(accessory.context.config.url + '/api/login', {
+    fetch(new URL('/api/login', accessory.context.config.url), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
         const msg = {
           auth: json.name + ':' + json.session
         };
-        const octo = new sockjs(accessory.context.config.url + '/sockjs/');
+        const octo = new sockjs(new URL('/sockjs/', accessory.context.config.url).href);
 
         octo.onopen = (): void => {
           this.log(accessory.context.config.name + ' SockJS Connection Opened');
@@ -244,7 +244,7 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
       } else {
         body.command += '0';
       }
-      fetch(accessory.context.config.url + '/api/printer/command', {
+      fetch(new URL('/api/printer/command', accessory.context.config.url), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -379,8 +379,6 @@ class OctoprintPlatform implements DynamicPlatformPlugin {
         .on('set', this.setCaseLightToggle.bind(this, accessory))
         .updateValue(true);
     }
-
-    accessory.updateReachability(true);
   }
 
   removeAccessories(accessories: Array<PlatformAccessory>): void {
